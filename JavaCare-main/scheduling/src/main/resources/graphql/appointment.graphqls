@@ -1,0 +1,32 @@
+type Query {
+    healthCheck: String!
+}
+
+type Mutation {
+    createAppointment(input: AppointmentInputDTO!): Appointment,
+    updateAppointment(input: AppointmentInputDTO!): Appointment!,
+    cancelAppointment(id: ID!, userId: ID!): Appointment
+}
+
+input AppointmentInputDTO {
+    id: ID
+    patientId: ID!
+    doctorId: ID!
+    appointmentDateTime: String!
+    status: String!
+    userId: ID!
+}
+
+type Appointment {
+    id: ID!
+    patientId: ID!
+    doctorId: ID!
+    appointmentDateTime: String!
+    status: String!
+}
+
+enum AppointmentStatus {
+    SCHEDULED,
+    CANCELLED,
+    COMPLETED
+}

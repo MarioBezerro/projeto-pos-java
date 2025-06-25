@@ -1,0 +1,28 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: notification-service
+
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: guest
+    password: guest
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: javacare.tech.challenge.fiap@gmail.com
+    password: ZUVFWOKQAWOZIEQH
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+services:
+  user:
+    url: http://user:8083
