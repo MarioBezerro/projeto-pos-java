@@ -1,0 +1,141 @@
+version: '3.8'
+
+services:
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"      # AMQP
+      - "15672:15672"    # Painel web
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  postgres-cliente:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: clientes
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+
+  postgres-produto:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: produtos
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5434:5432"
+
+  postgres-estoque:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: estoques
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5435:5432"
+
+  postgres-pagamento:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: pagamentos
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5436:5432"
+
+  postgres-pedido:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: pedidos
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5437:5432"
+
+  cliente-service:
+    build: ./cliente-service
+    ports:
+      - "8081:8080"
+    depends_on:
+      - postgres-cliente
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-cliente:5432/clientes
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: password
+
+  produto-service:
+    build: ./produto-service
+    ports:
+      - "8082:8080"
+    depends_on:
+      - postgres-produto
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-produto:5432/produtos
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: password
+
+  estoque-service:
+    build: ./estoque-service
+    ports:
+      - "8083:8080"
+    depends_on:
+      - postgres-estoque
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-estoque:5432/estoques
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: password
+
+  pagamento-service:
+    build: ./pagamento-service
+    ports:
+      - "8084:8080"
+    depends_on:
+      - postgres-pagamento
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-pagamento:5432/pagamentos
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: password
+
+  pedido-service:
+    build: ./pedido-service
+    ports:
+      - "8085:8080"
+    depends_on:
+      - postgres-pedido
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-pedido:5432/pedidos
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: password
+
+  pedido-receiver:
+    build: ./pedido-receiver
+    ports:
+      - "8086:8080"
+    depends_on:
+      - rabbitmq
+      - cliente-service
+      - produto-service
+      - estoque-service
+      - pagamento-service
+      - pedido-service
+
+  test-runner:
+    image: maven:3.9.4-eclipse-temurin-21
+    volumes:
+      - .:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+    working_dir: /app
+    depends_on:
+      - cliente-service
+      - produto-service
+      - estoque-service
+      - pagamento-service
+      - pedido-service
+      - pedido-receiver
+    command: mvn test
+    environment:
+      - TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal
